@@ -14,6 +14,9 @@ normalizePort, onError, onListening, handle404, basicErrorHandler
 import { router as indexRouter } from './routes/index.mjs';
 // import { router as notesRouter } from './routes/notes.mjs';var indexRouter = require('./routes/index');
 
+import { InMemoryNotesStore } from './models/notes-memory.mjs';
+export const NotesStore = new InMemoryNotesStore();
+
 export const app = express();
 
 // view engine setup
