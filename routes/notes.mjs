@@ -42,3 +42,16 @@ router.post('/save', async (req, res, next) => {
     next(err);
   }
 });
+
+// Edit note (update)
+router.get('/edit', async (req, res, next) => {
+  try {
+    const note = await notes.read(req.query.key);
+    res.render('noteedit', {
+      title: note ? ("Edit " + note.title) : "Add a note",
+      docreate: false,
+      notekey: req.query.key,
+      note: note
+    });
+  } catch (err) { next(err); };
+});
