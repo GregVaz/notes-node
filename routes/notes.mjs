@@ -14,6 +14,21 @@ router.get('/add', (req, res, next) => {
   });
 });
 
+// Read the note (read)
+router.get('/view', async (req, res, next) => {
+  try {
+    let note = await notes.read(req.query.key);
+    res.render('noteview', {
+      title: note ? note.title : '',
+      notekey: req.query.key,
+      note: note
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Save the note (create)
 router.post('/save', async (req, res, next) => {
   try {
     let note;
