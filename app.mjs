@@ -12,7 +12,7 @@ import {
 normalizePort, onError, onListening, handle404, basicErrorHandler
 } from './appsupport.mjs';
 import { router as indexRouter } from './routes/index.mjs';
-// import { router as notesRouter } from './routes/notes.mjs';var indexRouter = require('./routes/index');
+import { router as notesRouter } from './routes/notes.mjs';
 
 import { InMemoryNotesStore } from './models/notes-memory.mjs';
 export const NotesStore = new InMemoryNotesStore();
@@ -31,7 +31,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-// app.use('/notes', notesRouter);
+app.use('/notes', notesRouter);
 
 
 // catch 404 and forward to error handler
