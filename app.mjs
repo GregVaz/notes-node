@@ -14,6 +14,8 @@ normalizePort, onError, onListening, handle404, basicErrorHandler
 import { router as indexRouter } from './routes/index.mjs';
 import { router as notesRouter } from './routes/notes.mjs';
 
+import { default as rfs } from 'rotating-file-stream';
+
 import { InMemoryNotesStore } from './models/notes-memory.mjs';
 export const NotesStore = new InMemoryNotesStore();
 
@@ -45,3 +47,16 @@ export const server = http.createServer(app);
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
+
+// log rotation referes to a DevOps practice of keeping log file snapshots,
+// where each snapshot covers a few hours of activity
+app.use(logger(process.env.REQUEST_LOG_FORMAT || 'dev', {
+  stream: process.env.REQUEST_LOG_FILE ?
+  rfs.createStream(process.env.REQUEST_LOG_FILE, {
+    size: '10M',
+    // rotate every 10 MegaBytes written
+    interval: '1d', // rotate daily
+    compress: 'gzip' // compress rotated files
+  })
+  : process.stdout
+}));
