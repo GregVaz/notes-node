@@ -1,6 +1,9 @@
 <form method='POST' action='/notes/save'>
-  <input type='hidden' name='docreate' value='<%= docreate ? "create" : "update"%>'>
-<p>Key:
+{{#if docreate}}
+  <input type='hidden' name='docreate' value="create">
+{{else}}
+  <input type='hidden' name='docreate' value="update">
+{{/if}}<p>Key:
   {{#if docreate }}
     <input type='text' name='notekey' value=''/>
   {{else}}
@@ -11,9 +14,7 @@
 
 <p>Title: <input type='text' name='title' value='{{#if note }}{{note.title}}{{/if}}' /></p>
 <br/>
-<textarea rows=5 cols=40 name='body'>
-  {{#if note }}{{note.body}}{{/if}}
-</textarea>
+<textarea rows=5 cols=40 name='body'>{{#if note }}{{note.body}}{{/if}}</textarea>
 <br/>
 <input type='submit' value='Submit' />
 </form>

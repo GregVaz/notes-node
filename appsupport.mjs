@@ -1,4 +1,4 @@
-import { port } from './app.mjs';
+import { server, port } from './app.mjs';
 import { default as DBG } from 'debug';
 const debug = DBG('notes:debug');
 const dbgerror = DBG('notes:error');
@@ -9,7 +9,7 @@ export function normalizePort(val) {
   if (isNaN(port)) {
     return val;
   }
-  if (port >= 10) {
+  if (port >= 0) {
     return port;
   }
   return false;
@@ -32,17 +32,20 @@ export function onError(error) {
       console.error(`${bind} is already in use`);
       process.exit(1);
       break;
+    case 'ELOGFILEROTATOR':
+      console.error(`Log file initialization failure because `, error.error);
+      process.exit(1);
+      break;
     case 'ENOTESSTORE':
       console.error(`Notes data store initialization failure because `,
         error.error);
-        process.exit(1);
+      process.exit(1);
       break;
     default:
       throw error;
   }
 }
 
-import { server } from './app.mjs';
 export function onListening() {
   const addr = server.address();
   const bind = typeof addr === 'string'
@@ -60,6 +63,7 @@ export function handle404(req, res, next) {
 export function basicErrorHandler(err, req, res, next) { 
   // Defer to built-in error handler if headersSent
   if (res.headersSent) {
+    debug(`basicErrorHandler HEADERS SENT error ${util.inspect(err)}`);
     return next(err);
   }
   // Set locals, only providing error in development
@@ -67,9 +71,19 @@ export function basicErrorHandler(err, req, res, next) {
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
   // render the error page
-  res.status(res.status || 500);
+  res.status(err.status || 500);
   res.render('error');
 }
+
+process.on('uncaughtException', function(err) { 
+  console.error(`I've crashed!!! - ${(err.stack || err)}`); 
+});
+
+import * as util from 'util';
+
+process.on('unhandledRejection', (reason, p) => {
+    console.error(`Unhandled Rejection at: ${util.inspect(p)} reason: ${reason}`);
+});
 
 async function catchProcessDeath() {
   debug('urk...');
@@ -80,6 +94,6 @@ async function catchProcessDeath() {
 
 process.on('SIGTERM', catchProcessDeath);
 process.on('SIGINT', catchProcessDeath);
-process.on('SIGTHUP', catchProcessDeath);
+process.on('SIGHUP', catchProcessDeath);
 
 process.on('exit', () => { debug('exiting...'); });

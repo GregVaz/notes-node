@@ -13,16 +13,15 @@ normalizePort, onError, onListening, handle404, basicErrorHandler
 } from './appsupport.mjs';
 import { router as indexRouter } from './routes/index.mjs';
 import { router as notesRouter } from './routes/notes.mjs';
-
 import { default as rfs } from 'rotating-file-stream';
-
 import { default as DBG } from 'debug';
+
 const debug = DBG('notes:debug');
 const dbgerror = DBG('notes:error');
 
 import { useModel as useNotesModel } from './models/notes-store.mjs';
 useNotesModel(process.env.NOTES_MODEL ? process.env.NOTES_MODEL : 'memory')
-  .then(store => {  })
+  .then(store => { debug(`Using NotesStore ${store}`); })
   .catch(error => { onError({ code: 'ENOTESSTORE', error}); });
 
 export const app = express();
@@ -32,7 +31,19 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 hbs.registerPartials(path.join(__dirname, 'partials'));
 
-app.use(logger('dev'));
+// log rotation referes to a DevOps practice of keeping log file snapshots,
+// where each snapshot covers a few hours of activity
+app.use(logger(process.env.REQUEST_LOG_FORMAT || 'dev', {
+  stream: process.env.REQUEST_LOG_FILE ?
+  rfs.createStream(process.env.REQUEST_LOG_FILE, {
+    size: '10M',
+    // rotate every 10 MegaBytes written
+    interval: '1d', // rotate daily
+    compress: 'gzip' // compress rotated files
+  })
+  : process.stdout
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -50,24 +61,11 @@ export const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 export const server = http.createServer(app);
+
 server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
-
-// log rotation referes to a DevOps practice of keeping log file snapshots,
-// where each snapshot covers a few hours of activity
-app.use(logger(process.env.REQUEST_LOG_FORMAT || 'dev', {
-  stream: process.env.REQUEST_LOG_FILE ?
-  rfs.createStream(process.env.REQUEST_LOG_FILE, {
-    size: '10M',
-    // rotate every 10 MegaBytes written
-    interval: '1d', // rotate daily
-    compress: 'gzip' // compress rotated files
-  })
-  : process.stdout
-}));
-
 server.on('request', (req, res) => {
   debug(`${new Date().toISOString()} request ${req.method}
   ${req.url}`);
 });
+server.on('error', onError);
+server.on('listening', onListening);
