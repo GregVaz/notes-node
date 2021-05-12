@@ -20,8 +20,10 @@ import { default as DBG } from 'debug';
 const debug = DBG('notes:debug');
 const dbgerror = DBG('notes:error');
 
-import { InMemoryNotesStore } from './models/notes-memory.mjs';
-export const NotesStore = new InMemoryNotesStore();
+import { useModel as useNotesModel } from './models/notes-store.mjs';
+useNotesModel(process.env.NOTES_MODEL ? process.env.NOTES_MODEL : 'memory')
+  .then(store => {  })
+  .catch(error => { onError({ code: 'ENOTESSTORE', error}); });
 
 export const app = express();
 
