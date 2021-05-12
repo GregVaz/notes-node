@@ -2,6 +2,7 @@ import { port } from './app.mjs';
 import { default as DBG } from 'debug';
 const debug = DBG('notes:debug');
 const dbgerror = DBG('notes:error');
+import { NotesStore } from './models/notes-store.mjs';
 
 export function normalizePort(val) {
   const port = parseInt(val, 10);
@@ -69,3 +70,16 @@ export function basicErrorHandler(err, req, res, next) {
   res.status(res.status || 500);
   res.render('error');
 }
+
+async function catchProcessDeath() {
+  debug('urk...');
+  await NotesStore.close();
+  await server.close();
+  process.exit(0);
+}
+
+process.on('SIGTERM', catchProcessDeath);
+process.on('SIGINT', catchProcessDeath);
+process.on('SIGTHUP', catchProcessDeath);
+
+process.on('exit', () => { debug('exiting...'); });
