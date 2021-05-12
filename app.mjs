@@ -16,6 +16,10 @@ import { router as notesRouter } from './routes/notes.mjs';
 
 import { default as rfs } from 'rotating-file-stream';
 
+import { default as DBG } from 'debug';
+const debug = DBG('notes:debug');
+const dbgerror = DBG('notes:error');
+
 import { InMemoryNotesStore } from './models/notes-memory.mjs';
 export const NotesStore = new InMemoryNotesStore();
 
@@ -60,3 +64,8 @@ app.use(logger(process.env.REQUEST_LOG_FORMAT || 'dev', {
   })
   : process.stdout
 }));
+
+server.on('request', (req, res) => {
+  debug(`${new Date().toISOString()} request ${req.method}
+  ${req.url}`);
+});

@@ -1,4 +1,7 @@
 import { port } from './app.mjs';
+import { default as DBG } from 'debug';
+const debug = DBG('notes:debug');
+const dbgerror = DBG('notes:error');
 
 export function normalizePort(val) {
   const port = parseInt(val, 10);
@@ -12,6 +15,7 @@ export function normalizePort(val) {
 }
 
 export function onError(error) {
+  dbgerror(error);
   if (error.syscall !== 'listen') {
     throw error;
   }
@@ -38,7 +42,7 @@ export function onListening() {
   const bind = typeof addr === 'string'
             ? 'pipe ' + addr
             : 'port ' + addr.port;
-  console.log(`Listening on ${bind}`);
+  debug(`Listening on ${bind}`);
 }
 
 export function handle404(req, res, next) {
